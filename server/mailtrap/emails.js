@@ -75,7 +75,7 @@ export const sendResetSuccessEmail = async (email, name) => {
 			to: recipient,
 			subject: "Password Reset Successful",
 			html: PASSWORD_RESET_SUCCESS_TEMPLATE.replace("{name}", name),
-			category: "Password Reset Success",
+			category: "Password Reset Successful",
 		});
 
 		console.log("Password reset success email sent successfully", response);
