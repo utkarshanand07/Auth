@@ -11,7 +11,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "auth": "file:..",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
