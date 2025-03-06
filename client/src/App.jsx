@@ -1,9 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import FloatingShape from "./components/FloatingShape";
+
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import LoadingSpinner from "./components/LoadingSpinner";
 
@@ -80,6 +83,23 @@ function App() {
             }
           />
           <Route path='/verify-email' element={<EmailVerificationPage />} />
+          <Route
+            path='/forgot-password'
+            element={
+              <RedirectAuthenticatedUser>
+                <ForgotPasswordPage />
+              </RedirectAuthenticatedUser>
+            }
+          />
+
+          <Route
+            path='/reset-password/:token'
+            element={
+              <RedirectAuthenticatedUser>
+                <ResetPasswordPage />
+              </RedirectAuthenticatedUser>
+            }
+          />
           {/* catch all routes */}
           <Route path='*' element={<Navigate to='/' replace />} />
         </Routes>
