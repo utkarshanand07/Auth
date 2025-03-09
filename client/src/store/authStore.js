@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import axios from "axios";
+import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/auth" : "/api/auth";
+const API_URL =
+	import.meta.env.MODE === "development"
+		? "http://localhost:5000/api/auth"
+		: "/api/auth";
 
 axios.defaults.withCredentials = true;
 
@@ -10,6 +14,7 @@ export const useAuthStore = create((set) => ({
 	isAuthenticated: false,
 	error: null,
 	isLoading: false,
+	isUpdatingProfile: false,
 	isCheckingAuth: true,
 	message: null,
 
@@ -19,10 +24,11 @@ export const useAuthStore = create((set) => ({
 			const response = await axios.post(`${API_URL}/signup`, { email, password, name });
 			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
 		} catch (error) {
-			set({ error: error.response.data.message || "Error signing up", isLoading: false });
+			set({ error: error.response?.data?.message || "Error signing up", isLoading: false });
 			throw error;
 		}
 	},
+
 	login: async (email, password) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -49,6 +55,7 @@ export const useAuthStore = create((set) => ({
 			throw error;
 		}
 	},
+
 	verifyEmail: async (code) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -56,10 +63,35 @@ export const useAuthStore = create((set) => ({
 			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
 			return response.data;
 		} catch (error) {
-			set({ error: error.response.data.message || "Error verifying email", isLoading: false });
+			set({ error: error.response?.data?.message || "Error verifying email", isLoading: false });
 			throw error;
 		}
 	},
+
+	updateProfile: async ({ profilePic }) => {
+		set({ isUpdatingProfile: true, error: null });
+	
+		// Validate that profilePic is a string
+		if (typeof profilePic !== "string") {
+			set({ isUpdatingProfile: false, error: "Invalid profile picture format" });
+			toast.error("Invalid profile picture format");
+			return;
+		}
+	
+		try {
+			const response = await axios.put(`${API_URL}/update-profile`, { profilePic });
+	
+			set({ user: response.data.user, isUpdatingProfile: false });
+			toast.success("Profile updated successfully");
+		} catch (error) {
+			set({
+				error: error.response?.data?.message || "Error updating profile",
+				isUpdatingProfile: false,
+			});
+			toast.error(error.response?.data?.message || "Error updating profile");
+		}
+	},
+
 	checkAuth: async () => {
 		set({ isCheckingAuth: true, error: null });
 		try {
@@ -69,6 +101,7 @@ export const useAuthStore = create((set) => ({
 			set({ error: null, isCheckingAuth: false, isAuthenticated: false });
 		}
 	},
+
 	forgotPassword: async (email) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -77,11 +110,12 @@ export const useAuthStore = create((set) => ({
 		} catch (error) {
 			set({
 				isLoading: false,
-				error: error.response.data.message || "Error sending reset password email",
+				error: error.response?.data?.message || "Error sending reset password email",
 			});
 			throw error;
 		}
 	},
+
 	resetPassword: async (token, password) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -90,7 +124,7 @@ export const useAuthStore = create((set) => ({
 		} catch (error) {
 			set({
 				isLoading: false,
-				error: error.response.data.message || "Error resetting password",
+				error: error.response?.data?.message || "Error resetting password",
 			});
 			throw error;
 		}

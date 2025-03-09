@@ -1,14 +1,15 @@
 import bcryptjs from "bcryptjs";
 import crypto from "crypto";
-
+import { User } from "../models/user.model.js";
+import cloudinary from "../db/cloudinary.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+
 import {
 	sendVerificationEmail,
 	sendWelcomeEmail,
 	sendPasswordResetEmail,
-	sendResetSuccessEmail, 
+	sendResetSuccessEmail,
 } from "../mailtrap/emails.js";
-import { User } from "../models/user.model.js";
 
 export const signup = async (req, res) => {
 	const { email, password, name } = req.body;
@@ -182,6 +183,48 @@ export const resetPassword = async (req, res) => {
 		console.log("Error in resetPassword ", error);
 		res.status(400).json({ success: false, message: error.message });
 	}
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { profilePic } = req.body;
+        const userId = req.user._id;
+
+        if (!profilePic) {
+            return res.status(400).json({ success: false, message: "Profile pic is required" });
+        }
+
+        // console.log("Received profilePic type:", typeof profilePic);
+        // console.log("Received profilePic:", profilePic);
+
+        if (typeof profilePic !== "string") {
+            return res.status(400).json({ success: false, message: "Invalid profile picture format" });
+        }
+
+        // Upload image to Cloudinary
+        const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+            folder: "profile_pictures",
+            resource_type: "image",
+        });
+
+        // console.log("Upload response:", uploadResponse);
+
+        // Update user's profile pic
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profilePic: uploadResponse.secure_url },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, user: updatedUser });
+    } catch (error) {
+        console.error("Error in updateProfile:", error);
+        res.status(500).json({ success: false, message: "Internal server error", error: error.message });
+    }
 };
 
 export const checkAuth = async (req, res) => {
