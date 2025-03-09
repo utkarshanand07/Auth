@@ -2,7 +2,9 @@ import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 import { User } from "../models/user.model.js";
 import cloudinary from "../db/cloudinary.js";
+import { oauth2Client } from "../utils/googleClient.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+import axios from "axios";
 
 import {
 	sendVerificationEmail,
@@ -18,7 +20,7 @@ export const signup = async (req, res) => {
 		if (!email || !password || !name) {
 			throw new Error("All fields are required");
 		}
-
+        console.log("signup called");
 		const userAlreadyExists = await User.findOne({ email });
 		console.log("userAlreadyExists", userAlreadyExists);
 
@@ -33,6 +35,7 @@ export const signup = async (req, res) => {
 			email,
 			password: hashedPassword,
 			name,
+			authType: "email",
 			verificationToken,
 			verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
 		});
@@ -94,6 +97,7 @@ export const login = async (req, res) => {
 	const { email, password } = req.body;
 	try {
 		const user = await User.findOne({ email });
+		console.log("login called");
 		if (!user) {
 			return res.status(400).json({ success: false, message: "Invalid credentials" });
 		}
@@ -224,6 +228,56 @@ export const updateProfile = async (req, res) => {
     } catch (error) {
         console.error("Error in updateProfile:", error);
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
+    }
+};
+
+export const googleAuth = async (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!code) {
+            return res.status(400).json({ success: false, message: "No authorization code provided" });
+        }
+        console.log("googleauth called");
+        // Exchange authorization code for access token
+        const { tokens } = await oauth2Client.getToken(code);
+
+        if (!tokens.access_token) {
+            return res.status(400).json({ success: false, message: "Failed to get access token" });
+        }
+
+        // Fetch user info from Google
+        const googleRes = await axios.get(
+            `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`
+        );
+
+        const { email, name, picture } = googleRes.data;
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = new User({
+                name,
+                email,
+                profilePic: picture,
+                authType: "google",
+                isVerified: true,
+            });
+
+            await user.save();
+        }
+
+        // Generate JWT token and set cookie
+        const jwtToken = generateTokenAndSetCookie(res, user._id);
+
+        res.status(200).json({
+            success: true,
+            message: "Google login successful",
+            token: jwtToken,
+            user: { ...user._doc, password: undefined },
+        });
+    } catch (error) {
+        console.error("Error in Google login: ", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 

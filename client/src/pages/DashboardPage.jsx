@@ -68,7 +68,7 @@ const DashboardPage = () => {
 					</label>
 				</div>
 				<p className="text-sm text-zinc-400">
-              {isUpdatingProfile ? "Uploading..." : ""}
+              {/* {isUpdatingProfile ? "Uploading..." : ""} */}
             </p>
 			</div>
 
