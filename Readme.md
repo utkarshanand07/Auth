@@ -1,5 +1,3 @@
-# <img src="https://raw.githubusercontent.com/utkarshanand07/Auth/client/public/logo.png" alt="CastleBlack Auth Logo" width="40"> CastleBlack Auth
-
 **CastleBlack Auth** is a full-stack authentication system designed to handle user registration, login, and session management. Built with **Node.js**, **Express.js**, and **MongoDB**, it offers a secure and scalable solution for modern web applications, featuring email/password login, Google OAuth, password reset, and more.
 
 ## 🚀 Features
